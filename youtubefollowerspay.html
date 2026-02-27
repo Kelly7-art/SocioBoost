@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socioboost - Complete YouTube Payment</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">Socioboost</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#services">Services</a>
+            <a href="index.html#pricing">Pricing</a>
+            <a href="index.html#contact">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="form-container">
+            <h2 style="text-align: center; margin-bottom: 30px;">💰 Complete Your YouTube Payment</h2>
+            
+            <!-- Order Summary -->
+            <div id="orderSummary" style="background: #f0f4ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <!-- Will be populated by JavaScript -->
+            </div>
+
+            <!-- Payment Details -->
+            <div class="payment-details">
+                <h3>📲 Send Payment To:</h3>
+                <div class="detail-item">
+                    <strong>Mobile Money Number:</strong> 0552183826
+                </div>
+                <div class="detail-item">
+                    <strong>Recipient Name:</strong> FREDRICK OWUSU ANSAH
+                </div>
+                <div class="detail-item">
+                    <strong>Network:</strong> MTN Ghana
+                </div>
+                <div class="detail-item">
+                    <strong>Amount to send:</strong> <span id="paymentAmount" style="font-size: 20px; color: #667eea; font-weight: bold;"></span>
+                </div>
+            </div>
+
+            <p style="text-align: center; margin: 20px 0; color: #666; background: #fff3cd; padding: 10px; border-radius: 5px;">
+                ⚠️ After sending payment, please enter the transaction ID below to confirm.
+            </p>
+
+            <!-- Transaction ID Form -->
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="transactionId">Transaction ID</label>
+                    <input type="text" id="transactionId" placeholder="Enter transaction ID" required>
+                </div>
+
+                <button type="submit" class="btn">Confirm Payment</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="index.html" class="btn" style="background: #666; display: none;" id="doneBtn">Done - Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup -->
+    <div class="popup-overlay" id="popupOverlay"></div>
+    <div class="popup" id="popup">
+        <i class="fas fa-check-circle" style="font-size: 48px; color: #4CAF50; margin-bottom: 20px;"></i>
+        <h3 style="margin-bottom: 15px;">Checking Payment!</h3>
+        <p style="margin-bottom: 20px; color: #666;">We will notify you when confirmed.</p>
+        <button class="btn" onclick="closePopup()" style="background: #667eea;">OK</button>
+    </div>
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/233552183826?text=Hello%20Socioboost%2C%20I%20just%20made%20payment%20for%20YouTube%20boost" 
+       class="whatsapp-float" 
+       target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script>
+        // Load order details
+        const orderDetails = JSON.parse(localStorage.getItem('orderDetails')) || {
+            platform: 'YouTube',
+            type: 'subscribers',
+            quantity: '1000',
+            amount: '¢420'
+        };
+
+        // Display order summary
+        document.getElementById('orderSummary').innerHTML = `
+            <h3 style="margin-bottom: 10px;">📋 Order Summary</h3>
+            <p><strong>Platform:</strong> ${orderDetails.platform}</p>
+            <p><strong>Service:</strong> ${orderDetails.type.toUpperCase()} - ${parseInt(orderDetails.quantity).toLocaleString()}</p>
+            <p><strong>Amount:</strong> ${orderDetails.amount}</p>
+        `;
+
+        document.getElementById('paymentAmount').textContent = orderDetails.amount;
+
+        // Handle payment confirmation
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const transactionId = document.getElementById('transactionId').value;
+            
+            // Prepare message for Telegram bot
+            const message = `
+🔔 <b>💰 YOUTUBE PAYMENT CONFIRMATION</b> 🔔
+
+📱 <b>Platform:</b> ${orderDetails.platform}
+📊 <b>Service:</b> ${orderDetails.type.toUpperCase()} - ${parseInt(orderDetails.quantity).toLocaleString()}
+💵 <b>Amount Paid:</b> ${orderDetails.amount}
+📧 <b>Customer Email:</b> ${orderDetails.email || 'N/A'}
+📞 <b>Customer Phone:</b> ${orderDetails.phone || 'N/A'}
+🔗 <b>Channel/Video Link:</b> ${orderDetails.link || 'N/A'}
+🆔 <b>Transaction ID:</b> ${transactionId}
+🕐 <b>Time:</b> ${new Date().toLocaleString()}
+
+<code>✅ Payment confirmed! Ready to process YouTube order.</code>
+            `;
+
+            // Telegram Bot Configuration
+            const botToken = '8200243949:AAEmhTB7eQtooSGOaSfTITiWpC38nveFS9U';
+            const chatId = '6353331252';
+
+            // Show popup
+            document.getElementById('popup').classList.add('active');
+            document.getElementById('popupOverlay').classList.add('active');
+
+            try {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+                
+                console.log('Payment confirmation sent to Telegram');
+                
+            } catch (error) {
+                console.error('Error sending to Telegram:', error);
+            }
+
+            // Show Done button
+            document.getElementById('doneBtn').style.display = 'inline-block';
+            
+            // Clear form
+            this.reset();
+        });
+
+        function closePopup() {
+            document.getElementById('popup').classList.remove('active');
+            document.getElementById('popupOverlay').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
