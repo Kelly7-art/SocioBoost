@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socioboost - Place Your Order</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            SOCIOBOOST 🚀
+            <span>Place Your Order</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="order.html">Order</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="form-container">
+            <h2>📝 Place Your Order</h2>
+            
+            <form id="orderForm">
+                <!-- Platform Selection -->
+                <div class="form-group">
+                    <label>Select Platform *</label>
+                    <select id="platform" required onchange="updateServiceType()">
+                        <option value="">-- Choose Platform --</option>
+                        <option value="tiktok">TikTok</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="whatsapp">WhatsApp</option>
+                    </select>
+                </div>
+
+                <!-- Service Type Selection -->
+                <div class="form-group">
+                    <label>What would you like to boost? *</label>
+                    <select id="serviceType" required onchange="updateLinkLabel(); calculatePrice()">
+                        <option value="">-- Select Service --</option>
+                    </select>
+                </div>
+
+                <!-- Link Input (Dynamic Label) -->
+                <div class="form-group">
+                    <label id="linkLabel">Profile/Channel Link *</label>
+                    <input type="url" id="link" placeholder="https://..." required>
+                    <small style="color: #666; display: block; margin-top: 5px;">Enter the full URL</small>
+                </div>
+
+                <!-- Quantity Input with Validation -->
+                <div class="form-group">
+                    <label>Quantity *</label>
+                    <input type="number" id="quantity" class="quantity-input" min="1" max="10000" step="1" required oninput="validateQuantity(); calculatePrice()">
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span id="minQuantity" style="color: #666; font-size: 13px;">Min: </span>
+                        <span id="maxQuantity" style="color: #666; font-size: 13px;">Max: 10,000</span>
+                    </div>
+                    <div id="quantityFeedback" class="invalid-feedback"></div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="form-group">
+                    <label>Your Phone Number (MTN) *</label>
+                    <input type="tel" id="phone" placeholder="e.g., 0552183826" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Your Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email (optional)">
+                </div>
+
+                <!-- Price Display -->
+                <div class="price-display" id="priceDisplay">
+                    <div class="label">Total Amount</div>
+                    <div class="amount" id="totalAmount">¢0</div>
+                    <div class="note" id="priceNote">Select options to see price</div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-large" style="width: 100%;" id="submitBtn">Proceed to Payment →</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Floating WhatsApp Customer Service Button -->
+    <a href="https://wa.me/233552183826?text=Hello%20Socioboost%2C%20I%20need%20help%20with%20my%20order" 
+       class="whatsapp-float-cs" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script>
+        // Pricing Configuration
+        const pricing = {
+            tiktok: {
+                followers: { min: 500, max: 10000, basePrice: 30, baseQty: 500 },
+                likes: { min: 1000, max: 10000, basePrice: 15, baseQty: 1000 },
+                views: { min: 5000, max: 10000, basePrice: 20, baseQty: 5000 }
+            },
+            instagram: {
+                followers: { min: 500, max: 10000, basePrice: 30, baseQty: 500 },
+                likes: { min: 1000, max: 10000, basePrice: 15, baseQty: 1000 },
+                views: { min: 1000, max: 10000, basePrice: 12, baseQty: 1000 }
+            },
+            facebook: {
+                followers: { min: 500, max: 10000, basePrice: 30, baseQty: 500 },
+                views: { min: 1000, max: 10000, basePrice: 12, baseQty: 1000 }
+            },
+            telegram: {
+                subscribers: { min: 500, max: 10000, basePrice: 40, baseQty: 500 },
+                reactions: { min: 1000, max: 10000, basePrice: 30, baseQty: 1000 },
+                views: { min: 1000, max: 10000, basePrice: 12, baseQty: 1000 }
+            },
+            whatsapp: {
+                followers: { min: 100, max: 10000, basePrice: 35, baseQty: 100 },
+                reactions: { min: 500, max: 10000, basePrice: 35, baseQty: 500 }
+            }
+        };
+
+        // Service options for each platform
+        const serviceOptions = {
+            tiktok: [
+                { value: 'followers', text: 'Followers' },
+                { value: 'likes', text: 'Likes' },
+                { value: 'views', text: 'Views' }
+            ],
+            instagram: [
+                { value: 'followers', text: 'Followers' },
+                { value: 'likes', text: 'Likes' },
+                { value: 'views', text: 'Views' }
+            ],
+            facebook: [
+                { value: 'followers', text: 'Followers' },
+                { value: 'views', text: 'Views' }
+            ],
+            telegram: [
+                { value: 'subscribers', text: 'Subscribers' },
+                { value: 'reactions', text: 'Reactions' },
+                { value: 'views', text: 'Views' }
+            ],
+            whatsapp: [
+                { value: 'followers', text: 'Followers' },
+                { value: 'reactions', text: 'Reactions' }
+            ]
+        };
+
+        // Update link label
+        function updateLinkLabel() {
+            const platform = document.getElementById('platform').value;
+            const service = document.getElementById('serviceType').value;
+            const linkLabel = document.getElementById('linkLabel');
+            
+            if (!platform || !service) return;
+            
+            if (service === 'followers' || service === 'subscribers') {
+                linkLabel.textContent = platform === 'whatsapp' ? 'WhatsApp Channel/Group Link *' : 'Profile/Channel Link *';
+            } else {
+                linkLabel.textContent = 'Post/Video Link *';
+            }
+        }
+
+        // Update service type dropdown
+        function updateServiceType() {
+            const platform = document.getElementById('platform').value;
+            const serviceSelect = document.getElementById('serviceType');
+            
+            serviceSelect.innerHTML = '<option value="">-- Select Service --</option>';
+            
+            if (platform && serviceOptions[platform]) {
+                serviceOptions[platform].forEach(service => {
+                    const option = document.createElement('option');
+                    option.value = service.value;
+                    option.textContent = service.text;
+                    serviceSelect.appendChild(option);
+                });
+            }
+            
+            updateQuantityLimits();
+        }
+
+        // Update quantity limits
+        function updateQuantityLimits() {
+            const platform = document.getElementById('platform').value;
+            const service = document.getElementById('serviceType').value;
+            const quantityInput = document.getElementById('quantity');
+            const minSpan = document.getElementById('minQuantity');
+            
+            if (platform && service && pricing[platform] && pricing[platform][service]) {
+                const limits = pricing[platform][service];
+                quantityInput.min = limits.min;
+                quantityInput.max = limits.max;
+                quantityInput.value = limits.min;
+                minSpan.textContent = `Min: ${limits.min.toLocaleString()}`;
+            }
+            
+            validateQuantity();
+            calculatePrice();
+        }
+
+        // Validate quantity
+        function validateQuantity() {
+            const platform = document.getElementById('platform').value;
+            const service = document.getElementById('serviceType').value;
+            const quantityInput = document.getElementById('quantity');
+            const feedback = document.getElementById('quantityFeedback');
+            const quantity = parseInt(quantityInput.value);
+            
+            if (!platform || !service) return;
+            
+            const limits = pricing[platform][service];
+            if (!limits) return;
+            
+            quantityInput.classList.remove('valid', 'invalid');
+            feedback.style.display = 'none';
+            
+            if (quantity < limits.min) {
+                quantityInput.classList.add('invalid');
+                feedback.textContent = `❌ Invalid quantity! Minimum order is ${limits.min.toLocaleString()}`;
+                feedback.style.display = 'block';
+            } else if (quantity > limits.max) {
+                quantityInput.classList.add('invalid');
+                feedback.textContent = `❌ Invalid quantity! Maximum order is ${limits.max.toLocaleString()}`;
+                feedback.style.display = 'block';
+            } else {
+                quantityInput.classList.add('valid');
+            }
+        }
+
+        // Calculate price
+        function calculatePrice() {
+            const platform = document.getElementById('platform').value;
+            const service = document.getElementById('serviceType').value;
+            const quantity = parseInt(document.getElementById('quantity').value) || 0;
+            const totalAmount = document.getElementById('totalAmount');
+            const priceNote = document.getElementById('priceNote');
+            
+            if (!platform || !service || !quantity) {
+                totalAmount.textContent = '¢0';
+                priceNote.textContent = 'Select options to see price';
+                return;
+            }
+            
+            const limits = pricing[platform][service];
+            if (!limits) return;
+            
+            // Only calculate if quantity is within limits
+            if (quantity >= limits.min && quantity <= limits.max) {
+                const units = quantity / limits.baseQty;
+                const price = units * limits.basePrice;
+                totalAmount.textContent = `¢${price.toFixed(2)}`;
+                priceNote.textContent = `${quantity.toLocaleString()} × ${limits.basePrice}/${limits.baseQty.toLocaleString()}`;
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('orderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const platform = document.getElementById('platform').value;
+            const service = document.getElementById('serviceType').value;
+            const link = document.getElementById('link').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value || 'Not provided';
+            const amount = document.getElementById('totalAmount').textContent;
+            
+            // Final validation
+            const limits = pricing[platform][service];
+            if (quantity < limits.min || quantity > limits.max) {
+                alert(`Please enter a valid quantity between ${limits.min} and ${limits.max}`);
+                return;
+            }
+            
+            // Platform names
+            const platformNames = {
+                tiktok: 'TikTok',
+                instagram: 'Instagram',
+                facebook: 'Facebook',
+                telegram: 'Telegram',
+                whatsapp: 'WhatsApp'
+            };
+            
+            // Service names
+            const serviceNames = {
+                followers: 'Followers',
+                likes: 'Likes',
+                views: 'Views',
+                subscribers: 'Subscribers',
+                reactions: 'Reactions'
+            };
+            
+            // Telegram message
+            const message = `
+🔔 <b>🔥 NEW ORDER RECEIVED - SOCIOBOOST</b> 🔔
+
+━━━━━━━━━━━━━━━━━━━━━
+📱 <b>Platform:</b> ${platformNames[platform]}
+🎯 <b>Service:</b> ${serviceNames[service]}
+📊 <b>Quantity:</b> ${quantity.toLocaleString()}
+💰 <b>Total Amount:</b> ${amount}
+━━━━━━━━━━━━━━━━━━━━━
+🔗 <b>Link:</b> ${link}
+📞 <b>Phone:</b> ${phone}
+📧 <b>Email:</b> ${email}
+━━━━━━━━━━━━━━━━━━━━━
+🕐 <b>Time:</b> ${new Date().toLocaleString()}
+<code>⏳ Waiting for payment confirmation...</code>
+            `;
+
+            // Telegram Bot Config
+            const botToken = '8200243949:AAEmhTB7eQtooSGOaSfTITiWpC38nveFS9U';
+            const chatId = '6353331252';
+
+            try {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+
+                const orderDetails = {
+                    platform: platformNames[platform],
+                    service: serviceNames[service],
+                    quantity: quantity.toLocaleString(),
+                    amount: amount,
+                    link: link,
+                    phone: phone,
+                    email: email,
+                    rawQuantity: quantity,
+                    rawAmount: amount.replace('¢', '')
+                };
+                
+                localStorage.setItem('socioboost_order', JSON.stringify(orderDetails));
+                window.location.href = 'pay.html';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('There was an error. Please contact support on WhatsApp.');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateServiceType();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socioboost - Complete Payment</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            SOCIOBOOST 🚀
+            <span>Complete Your Payment</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="order.html">Order</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="form-container">
+            <h2>💰 Complete Your Payment</h2>
+            
+            <!-- Order Summary -->
+            <div class="order-summary" id="orderSummary">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- Payment Details with Copy Button -->
+            <div class="payment-details">
+                <h3>📲 Send Payment To:</h3>
+                
+                <div class="detail-item">
+                    <span class="label">Mobile Money Number:</span>
+                    <div class="copy-container">
+                        <span class="value" id="momoNumber">0552183826</span>
+                        <button class="copy-btn" onclick="copyToClipboard('0552183826', this)">Copy</button>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="label">Recipient Name:</span>
+                    <div class="copy-container">
+                        <span class="value">FREDRICK OWUSU ANSAH</span>
+                        <button class="copy-btn" onclick="copyToClipboard('FREDRICK OWUSU ANSAH', this)">Copy</button>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="label">Network:</span>
+                    <span class="value">MTN Ghana</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="label">Amount to send:</span>
+                    <span class="value" id="paymentAmount" style="color: #667eea; font-size: 24px;"></span>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0; color: #856404;">
+                    <i class="fas fa-info-circle"></i> 
+                    After sending payment, take a screenshot and upload it below to confirm.
+                </p>
+            </div>
+
+            <!-- Screenshot Upload Form (No Transaction ID) -->
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label>Upload Payment Screenshot *</label>
+                    <div class="file-upload" onclick="document.getElementById('screenshot').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p id="uploadText">Click to upload screenshot</p>
+                        <p style="font-size: 12px; color: #999;">PNG, JPG, or JPEG (max 5MB)</p>
+                        <input type="file" id="screenshot" accept="image/*" required style="display: none;" onchange="updateUploadText(this)">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-large" style="width: 100%;">✅ Confirm Payment</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="index.html" class="btn" style="background: #666; display: none;" id="doneBtn">🏠 Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup -->
+    <div class="popup-overlay" id="popupOverlay"></div>
+    <div class="popup" id="popup">
+        <i class="fas fa-check-circle"></i>
+        <h3>Payment Received!</h3>
+        <p id="popupMessage">
+            We'll Confirm Your Payment and Notify you.<br><br>
+            Once confirmed, your order will begin to be processed.<br><br>
+            Thanks for Choosing Us! 🙏
+        </p>
+        <button class="btn" onclick="closePopup()">OK</button>
+    </div>
+
+    <!-- Floating WhatsApp Customer Service Button -->
+    <a href="https://wa.me/233552183826?text=Hello%20Socioboost%2C%20I%20just%20made%20payment%20for%20order" 
+       class="whatsapp-float-cs" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script>
+        // Copy to clipboard function
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Load order details
+        const orderDetails = JSON.parse(localStorage.getItem('socioboost_order')) || {
+            platform: 'TikTok',
+            service: 'Followers',
+            quantity: '500',
+            amount: '¢30',
+            link: 'Not provided',
+            phone: 'Not provided',
+            email: 'Not provided'
+        };
+
+        // Display order summary
+        document.getElementById('orderSummary').innerHTML = `
+            <h3>📋 Order Summary</h3>
+            <div class="summary-row">
+                <span class="label">Platform:</span>
+                <span class="value">${orderDetails.platform}</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Service:</span>
+                <span class="value">${orderDetails.service}</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Quantity:</span>
+                <span class="value">${orderDetails.quantity}</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Amount:</span>
+                <span class="value">${orderDetails.amount}</span>
+            </div>
+        `;
+
+        document.getElementById('paymentAmount').textContent = orderDetails.amount;
+
+        // Update upload text
+        function updateUploadText(input) {
+            const text = document.getElementById('uploadText');
+            if (input.files && input.files[0]) {
+                text.textContent = `📸 ${input.files[0].name}`;
+            }
+        }
+
+        // Handle payment confirmation
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const screenshotFile = document.getElementById('screenshot').files[0];
+            
+            if (!screenshotFile) {
+                alert('Please upload your payment screenshot');
+                return;
+            }
+
+            // Prepare message for Telegram
+            const message = `
+🔔 <b>💰 PAYMENT CONFIRMATION - SOCIOBOOST</b> 🔔
+
+━━━━━━━━━━━━━━━━━━━━━
+📱 <b>Platform:</b> ${orderDetails.platform}
+🎯 <b>Service:</b> ${orderDetails.service}
+📊 <b>Quantity:</b> ${orderDetails.quantity}
+💰 <b>Amount Paid:</b> ${orderDetails.amount}
+━━━━━━━━━━━━━━━━━━━━━
+🔗 <b>Link:</b> ${orderDetails.link}
+📞 <b>Phone:</b> ${orderDetails.phone}
+📧 <b>Email:</b> ${orderDetails.email}
+━━━━━━━━━━━━━━━━━━━━━
+📸 <b>Screenshot:</b> Attached below
+🕐 <b>Time:</b> ${new Date().toLocaleString()}
+
+<code>✅ Payment confirmed! Ready to process order.</code>
+            `;
+
+            // Telegram Bot Config
+            const botToken = '8200243949:AAEmhTB7eQtooSGOaSfTITiWpC38nveFS9U';
+            const chatId = '6353331252';
+
+            try {
+                // Send text message
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+
+                // Send screenshot
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('photo', screenshotFile);
+                formData.append('caption', `Payment screenshot for: ${orderDetails.platform} - ${orderDetails.service}`);
+
+                await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // Show popup
+                document.getElementById('popup').classList.add('active');
+                document.getElementById('popupOverlay').classList.add('active');
+                
+                // Show Done button
+                document.getElementById('doneBtn').style.display = 'inline-block';
+                
+                // Clear form
+                this.reset();
+                document.getElementById('uploadText').textContent = 'Click to upload screenshot';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('There was an error. Please contact us on WhatsApp.');
+            }
+        });
+
+        function closePopup() {
+            document.getElementById('popup').classList.remove('active');
+            document.getElementById('popupOverlay').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
